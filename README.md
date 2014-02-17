@@ -12,20 +12,20 @@ This library is a simple, strongly-typed .NET wrapper around TrueVault's RESTful
 ###Features (Completed and Planned)
 
 - [x] JSON Document Store API
-- [] BLOB Store API
-- [] Search Schema API
+- [ ] BLOB Store API
+- [ ] Search Schema API
 
 ###External Dependencies
 
 > **Client Library**
 
-> ServiceStack.Text 3.9.71
-> AutoMapper 3.1.1
+> - ServiceStack.Text 3.9.71
+> - AutoMapper 3.1.1
 
 > **Test Project**
 
-> NBuilder 3.0.1.1
-> NUnit 2.6.3
+> - NBuilder 3.0.1.1
+> - NUnit 2.6.3
 
 #Usage
 
