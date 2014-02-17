@@ -9,11 +9,11 @@ TrueVault is a Secure API to store health data. See their website at https://www
 
 This library is a simple, strongly-typed .NET wrapper around TrueVault's RESTful API.
 
-###Features (Completed and Planned)
+###Features (:white_check_mark: Completed and :heavy_minus_sign: Planned)
 
 - :white_check_mark: JSON Document Store API
-- :white_square: BLOB Store API
-- :white_square: Search Schema API
+- :heavy_minus_sign: BLOB Store API
+- :heavy_minus_sign: Search Schema API
 
 ###External Dependencies
 
