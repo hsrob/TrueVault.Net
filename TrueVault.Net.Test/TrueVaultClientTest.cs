@@ -34,7 +34,6 @@ namespace TrueVault.Net.Test
 				.Build();
 
 			var response = trueVaultPersonClient.CreateDocument(Guid.Parse(ConfigurationManager.AppSettings["TrueVaultTestVault"]), person);
-			Debug.WriteLine("CreateDocument Response: {0}", response);
 			Assert.IsNotNull(response, "Response should not be null");
 			Assert.AreNotEqual(response.DocumentId, default(Guid), "Document ID should be a non-default GUID");
 			Assert.AreNotEqual(response.TransactionId, default(Guid), "Transaction ID should be a non-default GUID");
