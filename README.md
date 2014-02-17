@@ -11,9 +11,9 @@ This library is a simple, strongly-typed .NET wrapper around TrueVault's RESTful
 
 ###Features (Completed and Planned)
 
-- [x] JSON Document Store API
-- [ ] BLOB Store API
-- [ ] Search Schema API
+- :white_check_mark: JSON Document Store API
+- :white_square: BLOB Store API
+- :white_square: Search Schema API
 
 ###External Dependencies
 
