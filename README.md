@@ -1,4 +1,4 @@
-truevault-net
+TrueVault.Net
 =============
 
 .NET wrapper for the TrueVault API
