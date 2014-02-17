@@ -53,6 +53,20 @@ A document can be created with or without the optional `schemaId` parameter. Whi
 
 Each `DocumentResponse` exposes a `DeserializeDocument<T>` method, which extracts and returns the individual document as Type `T`. `DocumentResponse` contains the TrueVault document ID in its `Id` property, as well as the raw serialized Base64 encoded JSON string in its `Document` property.
 
+###Exception Handling
+
+When the library catches a `WebException`, it will make an attempt to parse and unwrap the `error` object in an error response from TrueVault. It will throw a new `WebException` with the original exception in the `InnerException` property, and a message formatted as follows, where `response` is the error response body returned by TrueVault.
+
+`TrueVault Transaction ID {response.transaction_id} - {HTTP Status Code} Error (Type: {response.error.type}) [Code: {response.error.code}]: {response.error.message}`
+
+##Running the Tests
+
+Update App.config in the TrueVault.Net.Test project with the values you wish to use for testing. Please note that the tests use the TrueVault API, so you may incur a small amount of usage by running them. Per the license, you agree that I cannot be held responsible for any usage charges, fees, overages, etc. you may incur by running the tests.
+
 #Contributing
 
 Pull requests are welcome. If you're planning on adding a major feature, please contact me first to make sure it fits with the direction of the library, and that I'm not already working on it!
+
+#Legal
+
+This library is made available under The MIT License. By using this library, you agree to the terms of that license.

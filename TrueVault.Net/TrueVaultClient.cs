@@ -152,9 +152,9 @@ namespace TrueVault.Net
         private WebException ParseWebException(WebException wex)
         {
             var errorResponse = JsonSerializer.DeserializeFromString<ErrorResponseDto>(wex.GetResponseBody());
-            return new WebException("TrueVault Transaction ID {0} Error (Type: {1}) [Code: {2}]: {3}"
-                .Fmt(errorResponse.transaction_id, errorResponse.error.type, errorResponse.error.code,
-                    errorResponse.error.message), wex, WebExceptionStatus.ProtocolError, wex.Response);
+            return new WebException("TrueVault Transaction ID {0} - {1} Error (Type: {2}) [Code: {3}]: {4}"
+                .Fmt(errorResponse.transaction_id, (int)wex.GetStatus().GetValueOrDefault(), errorResponse.error.type, errorResponse.error.code,
+                    errorResponse.error.message), wex, wex.Status, wex.Response);
         }
 
         private string VaultMultiDocumentUrl(Guid vaultId, IEnumerable<Guid> documentIds)
