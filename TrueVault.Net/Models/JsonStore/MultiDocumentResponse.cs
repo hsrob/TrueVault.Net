@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using ServiceStack.Text;
 
-namespace TrueVault.Net.Models
+namespace TrueVault.Net.Models.JsonStore
 {
     public class MultiDocumentResponse : TrueVaultResponse
     {

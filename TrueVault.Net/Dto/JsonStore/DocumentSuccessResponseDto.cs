@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace TrueVault.Net.Dto
+namespace TrueVault.Net.Dto.JsonStore
 {
     internal class DocumentSuccessResponseDto : TrueVaultResponseDto
     {

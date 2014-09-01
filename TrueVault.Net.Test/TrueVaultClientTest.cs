@@ -1,15 +1,13 @@
-﻿using System;
+﻿using FizzWare.NBuilder;
+using NUnit.Framework;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Configuration;
-using System.Diagnostics;
 using System.Linq;
-using System.Runtime;
-using System.Text;
-using System.Threading.Tasks;
-using FizzWare.NBuilder;
-using NUnit.Framework;
 using TrueVault.Net.Models;
+using TrueVault.Net.Models.JsonStore;
+using TrueVault.Net.Models.Schema;
 using TrueVault.Net.Test.TestModels;
 
 namespace TrueVault.Net.Test
@@ -19,13 +17,14 @@ namespace TrueVault.Net.Test
     {
         private TrueVaultClient trueVaultClient;
         private Guid testVaultId;
-        private ConcurrentStack<DocumentSuccessResponse> successResponses;
+        private ConcurrentStack<DocumentSuccessResponse> documentSuccessResponses;
+        private ConcurrentStack<SchemaSuccessResponse> schemaSuccessResponses;
 
         [TestFixtureSetUp]
         public void Setup()
         {
             trueVaultClient = new TrueVaultClient(ConfigurationManager.AppSettings["TrueVaultApiKey"]);
-            successResponses = new ConcurrentStack<DocumentSuccessResponse>();
+            documentSuccessResponses = new ConcurrentStack<DocumentSuccessResponse>();
             testVaultId = Guid.Parse(ConfigurationManager.AppSettings["TrueVaultTestVault"]);
         }
 
@@ -33,7 +32,7 @@ namespace TrueVault.Net.Test
         public void NewDocumentCanBeCreated()
         {
             var person = CreatePerson();
-            successResponses.Push(AssertCreatePersonSuccess(person, testVaultId));
+            documentSuccessResponses.Push(AssertCreatePersonSuccess(person, testVaultId));
         }
 
         [Test]
@@ -41,7 +40,7 @@ namespace TrueVault.Net.Test
         {
             var person = CreatePerson();
             var createResponse = AssertCreatePersonSuccess(person, testVaultId);
-            successResponses.Push(createResponse);
+            documentSuccessResponses.Push(createResponse);
 
             var retrievedPerson = trueVaultClient.GetDocument<Person>(testVaultId, createResponse.DocumentId);
 
@@ -55,7 +54,7 @@ namespace TrueVault.Net.Test
         {
             var person = CreatePerson();
             var createResponse = AssertCreatePersonSuccess(person, testVaultId);
-            successResponses.Push(createResponse);
+            documentSuccessResponses.Push(createResponse);
 
             person.Name += " Justgotmarried";
             person.Email = string.Format("{0}@truevaulttest.net", Guid.NewGuid());
@@ -83,11 +82,11 @@ namespace TrueVault.Net.Test
             people.ForEach(person =>
             {
                 var createResponse = AssertCreatePersonSuccess(person, testVaultId);
-                successResponses.Push(createResponse);
+                documentSuccessResponses.Push(createResponse);
                 createResponses.Add(createResponse.DocumentId, person);
             });
 
-            var multipleRetrievedDocuments = trueVaultClient.MultiGetDocuments<Person>(testVaultId,
+            var multipleRetrievedDocuments = trueVaultClient.MultiGetDocuments(testVaultId,
                 createResponses.Select(c => c.Key).ToArray());
             Assert.AreEqual(personCount, multipleRetrievedDocuments.Documents.Count());
 
@@ -103,11 +102,24 @@ namespace TrueVault.Net.Test
             }
         }
 
+        [Test]
+        public void SchemaCanBeCreated()
+        {
+            var personSchema = CreateSchema("Person");
+            schemaSuccessResponses.Push(AssertCreateSchemaSuccess(personSchema, testVaultId));
+        }
+
+        [Test]
+        public void SchemaCanBeDeleted()
+        {
+            var personSchema = CreateSchema("DeleteMe");
+        }
+
         [TestFixtureTearDown]
         public void Teardown()
         {
             DocumentSuccessResponse documentSuccessResponse;
-            while (successResponses.TryPop(out documentSuccessResponse))
+            while (documentSuccessResponses.TryPop(out documentSuccessResponse))
             {
                 trueVaultClient.DeleteDocument(testVaultId, documentSuccessResponse.DocumentId);
             }
@@ -138,6 +150,22 @@ namespace TrueVault.Net.Test
             return Builder<Person>.CreateListOfSize(listSize)
                 .All().With(p => p.Email = string.Format("{0}@truevaulttest.com", Guid.NewGuid().ToString()))
                 .Build().ToList();
+        }
+
+        private Schema CreateSchema(string schemaName)
+        {
+            var personSchema = new Schema(schemaName, new SchemaField("ID", false).AsInteger(), new SchemaField("Name"),
+                new SchemaField("Email"));
+            return personSchema;
+        }
+        private SchemaSuccessResponse AssertCreateSchemaSuccess(Schema schema, Guid vaultId)
+        {
+            var response = trueVaultClient.CreateSchema(vaultId, schema);
+            Assert.IsNotNull(response, "Response should not be null");
+            Assert.AreNotEqual(response.Schema.Id, default(Guid), "Schema ID should be a non-default GUID");
+            Assert.AreNotEqual(response.TransactionId, default(Guid), "Transaction ID should be a non-default GUID");
+            Assert.AreEqual(response.Result, "success", "Response should indicate success");
+            return response;
         }
 
         #endregion

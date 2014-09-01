@@ -2,7 +2,7 @@
 using System.Text;
 using ServiceStack.Text;
 
-namespace TrueVault.Net.Dto
+namespace TrueVault.Net.Dto.JsonStore
 {
     internal class DocumentRequestDto<T> where T : class, new()
     {

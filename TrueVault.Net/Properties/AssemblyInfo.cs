@@ -6,11 +6,11 @@ using System.Runtime.InteropServices;
 // associated with an assembly.
 
 [assembly: AssemblyTitle("TrueVault.Net")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("A .NET wrapper for the TrueVault RESTful API")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("Homesliced Software LLC")]
 [assembly: AssemblyProduct("TrueVault.Net")]
-[assembly: AssemblyCopyright("Copyright ©  2014")]
+[assembly: AssemblyCopyright("Copyright © Robert Parker 2014")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

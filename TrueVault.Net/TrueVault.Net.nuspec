@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+    <metadata>
+        <id>TrueVault.Net</id>
+        <version>1.0.1</version>
+        <title>TrueVault.Net</title>
+        <authors>Robert Parker</authors>
+        <owners>Robert Parker</owners>
+        <projectUrl>http://hsrob.github.io/TrueVault.Net</projectUrl>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>A .NET wrapper for the TrueVault RESTful API</description>
+        <copyright>2014 Robert Parker</copyright>
+        <tags>TrueVault</tags>
+        <dependencies>
+            <dependency id="AutoMapper" version="3.1.1" />
+            <dependency id="ServiceStack.Text" version="3.9.71" />
+        </dependencies>
+    </metadata>
+    <files>
+        <file src="bin\Release\TrueVault.Net.dll" target="lib\TrueVault.Net.dll" />
+    </files>
+</package>

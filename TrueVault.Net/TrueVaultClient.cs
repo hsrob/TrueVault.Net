@@ -3,9 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text;
+using AutoMapper;
 using ServiceStack.Text;
 using TrueVault.Net.Dto;
+using TrueVault.Net.Dto.JsonStore;
+using TrueVault.Net.Dto.Schema;
 using TrueVault.Net.Models;
+using TrueVault.Net.Models.JsonStore;
+using TrueVault.Net.Models.Schema;
 
 namespace TrueVault.Net
 {
@@ -20,6 +25,7 @@ namespace TrueVault.Net
             ClientConfig.Instance.AuthHeader = "Basic " + Convert.ToBase64String(Encoding.ASCII.GetBytes(apiKey + ":"));
         }
 
+        #region JSON Store
         /// <summary>
         ///     Creates a document in the specified Vault
         /// </summary>
@@ -133,8 +139,7 @@ namespace TrueVault.Net
         /// <param name="vaultId">ID of the Vault where these document are stored</param>
         /// <param name="documentIds">TrueVault Document IDs of the existing documents to get</param>
         /// <returns>The requested document</returns>
-        public MultiDocumentResponse MultiGetDocuments<T>(Guid vaultId, params Guid[] documentIds)
-            where T : class, new()
+        public MultiDocumentResponse MultiGetDocuments(Guid vaultId, params Guid[] documentIds)
         {
             try
             {
@@ -148,7 +153,57 @@ namespace TrueVault.Net
                 throw ParseWebException(wex);
             }
         }
+        #endregion
 
+        #region Schemas
+
+        /// <summary>
+        ///     Creates a new Schema in the specified Vault
+        /// </summary>
+        /// <param name="vaultId">ID of the Vault to create this schema in</param>
+        /// <param name="schema">Schema to create in the Vault</param>
+        /// <returns>SchemaSuccessResponse</returns>
+        public SchemaSuccessResponse CreateSchema(Guid vaultId, Schema schema)
+        {
+            var newSchemaRequestDto = new SchemaRequestDto(Mapper.Map<SchemaDto>(schema));
+
+            try
+            {
+                return
+                    VaultSchemasUrl(vaultId)
+                        .PostToUrl(newSchemaRequestDto, requestFilter: AuthorizationHeader)
+                        .MapResponseDto<SchemaCreateSuccessResponseDto, SchemaSuccessResponse>();
+            }
+            catch (WebException wex)
+            {
+                throw ParseWebException(wex);
+            }
+        }
+
+        /// <summary>
+        ///     Deletes an existing Schema
+        /// </summary>
+        /// <param name="vaultId">ID of the Vault where this Schema exists</param>
+        /// <param name="schemaId">TrueVault Schema ID of the existing Schema to delete</param>
+        /// <returns></returns>
+        public TrueVaultResponse DeleteSchema(Guid vaultId, Guid schemaId)
+        {
+            try
+            {
+                return
+                    VaultSchemaUrl(vaultId, schemaId)
+                        .DeleteFromUrl(requestFilter: AuthorizationHeader)
+                        .MapResponseDto<TrueVaultResponseDto, TrueVaultResponse>();
+            }
+            catch (WebException wex)
+            {
+                throw ParseWebException(wex);
+            }
+        }
+
+        #endregion
+
+        #region Helpers
         private WebException ParseWebException(WebException wex)
         {
             var errorResponse = JsonSerializer.DeserializeFromString<ErrorResponseDto>(wex.GetResponseBody());
@@ -174,9 +229,20 @@ namespace TrueVault.Net
             return "{0}{1}/documents".Fmt(ClientConfig.Instance.TrueVaultBaseUrl, vaultId.ToString());
         }
 
+        private string VaultSchemaUrl(Guid vaultId, Guid schemaId)
+        {
+            return "{0}{1}/schemas/{2}".Fmt(ClientConfig.Instance.TrueVaultBaseUrl, vaultId.ToString(), schemaId.ToString());
+        }
+
+        private string VaultSchemasUrl(Guid vaultId)
+        {
+            return "{0}{1}/schemas".Fmt(ClientConfig.Instance.TrueVaultBaseUrl, vaultId.ToString());
+        }
+
         private void AuthorizationHeader(HttpWebRequest request)
         {
             request.Headers.Add(HttpRequestHeader.Authorization, ClientConfig.Instance.AuthHeader);
         }
+        #endregion
     }
 }

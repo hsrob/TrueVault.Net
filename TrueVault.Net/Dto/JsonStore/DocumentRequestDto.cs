@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text;
 
-namespace TrueVault.Net.Dto
+namespace TrueVault.Net.Dto.JsonStore
 {
     internal class DocumentRequestDto
     {
