@@ -3,7 +3,7 @@ using System.Text;
 
 namespace TrueVault.Net.Dto.JsonStore
 {
-    internal class DocumentRequestDto
+    internal class DocumentSaveRequestDto
     {
         /// <summary>
         ///     Creates a Document request DTO for POST or PUT operations, accepting a serialized JSON string, which will
@@ -13,7 +13,7 @@ namespace TrueVault.Net.Dto.JsonStore
         ///     A serialized JSON string representing the document to be stored, which will automatically be
         ///     converted to Base64.
         /// </param>
-        public DocumentRequestDto(string jsonDocument)
+        public DocumentSaveRequestDto(string jsonDocument)
         {
             document = Convert.ToBase64String(Encoding.ASCII.GetBytes(jsonDocument));
         }
@@ -28,7 +28,7 @@ namespace TrueVault.Net.Dto.JsonStore
         ///     converted to Base64.
         /// </param>
         /// <param name="schemaId">The Search Engine Schema ID to associate this document with</param>
-        public DocumentRequestDto(string jsonDocument, Guid schemaId)
+        public DocumentSaveRequestDto(string jsonDocument, Guid schemaId)
             : this(jsonDocument)
         {
             schema_id = schemaId;

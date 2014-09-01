@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace TrueVault.Net.Dto.Schema
 {
-    public class SchemaFieldDto
+    internal class SchemaFieldDto
     {
         public string name { get; set; }
         public bool index { get; set; }

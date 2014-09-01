@@ -2,7 +2,7 @@
 
 namespace TrueVault.Net.Dto.JsonStore
 {
-    internal class DocumentSuccessResponseDto : TrueVaultResponseDto
+    internal class DocumentSaveSuccessResponseDto : TrueVaultResponseDto
     {
         public Guid document_id { get; set; }
     }

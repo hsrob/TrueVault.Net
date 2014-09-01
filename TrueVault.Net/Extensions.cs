@@ -3,7 +3,9 @@ using System.Text;
 using AutoMapper;
 using ServiceStack.Text;
 using TrueVault.Net.Dto;
+using TrueVault.Net.Dto.Schema;
 using TrueVault.Net.Models;
+using TrueVault.Net.Models.Schema;
 
 namespace TrueVault.Net
 {
@@ -20,6 +22,11 @@ namespace TrueVault.Net
             return
                 JsonSerializer.DeserializeFromString<T>(
                     Encoding.ASCII.GetString(Convert.FromBase64String(documentResponseString)));
+        }
+
+        public static Schema MapToSchema(this SchemaDto schemaDto)
+        {
+            return new Schema(schemaDto.id, schemaDto.name, Mapper.Map<SchemaField[]>(schemaDto.fields));
         }
     }
 }

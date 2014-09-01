@@ -1,4 +1,5 @@
-﻿using FizzWare.NBuilder;
+﻿using AutoMapper;
+using FizzWare.NBuilder;
 using NUnit.Framework;
 using System;
 using System.Collections.Concurrent;
@@ -17,15 +18,16 @@ namespace TrueVault.Net.Test
     {
         private TrueVaultClient trueVaultClient;
         private Guid testVaultId;
-        private ConcurrentStack<DocumentSuccessResponse> documentSuccessResponses;
-        private ConcurrentStack<SchemaSuccessResponse> schemaSuccessResponses;
+        private ConcurrentStack<DocumentSaveSuccessResponse> documentSuccessResponses;
+        private ConcurrentStack<SchemaSaveSuccessResponse> schemaSuccessResponses;
 
         [TestFixtureSetUp]
         public void Setup()
         {
             trueVaultClient = new TrueVaultClient(ConfigurationManager.AppSettings["TrueVaultApiKey"]);
-            documentSuccessResponses = new ConcurrentStack<DocumentSuccessResponse>();
+            documentSuccessResponses = new ConcurrentStack<DocumentSaveSuccessResponse>();
             testVaultId = Guid.Parse(ConfigurationManager.AppSettings["TrueVaultTestVault"]);
+            Mapper.AssertConfigurationIsValid();
         }
 
         [Test]
@@ -118,7 +120,7 @@ namespace TrueVault.Net.Test
         [TestFixtureTearDown]
         public void Teardown()
         {
-            DocumentSuccessResponse documentSuccessResponse;
+            DocumentSaveSuccessResponse documentSuccessResponse;
             while (documentSuccessResponses.TryPop(out documentSuccessResponse))
             {
                 trueVaultClient.DeleteDocument(testVaultId, documentSuccessResponse.DocumentId);
@@ -127,7 +129,7 @@ namespace TrueVault.Net.Test
 
         #region Helpers
 
-        private DocumentSuccessResponse AssertCreatePersonSuccess(Person person, Guid vaultId)
+        private DocumentSaveSuccessResponse AssertCreatePersonSuccess(Person person, Guid vaultId)
         {
             var response = trueVaultClient.CreateDocument(vaultId, person);
             Assert.IsNotNull(response, "Response should not be null");
@@ -158,7 +160,7 @@ namespace TrueVault.Net.Test
                 new SchemaField("Email"));
             return personSchema;
         }
-        private SchemaSuccessResponse AssertCreateSchemaSuccess(Schema schema, Guid vaultId)
+        private SchemaSaveSuccessResponse AssertCreateSchemaSuccess(Schema schema, Guid vaultId)
         {
             var response = trueVaultClient.CreateSchema(vaultId, schema);
             Assert.IsNotNull(response, "Response should not be null");

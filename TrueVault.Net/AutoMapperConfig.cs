@@ -24,15 +24,18 @@ namespace TrueVault.Net
             Mapper.CreateMap<InnerErrorDto, InnerError>();
             Mapper.CreateMap<ErrorResponseDto, ErrorResponse>();
             #region JSON Store
-            Mapper.CreateMap<DocumentSuccessResponseDto, DocumentSuccessResponse>();
-            Mapper.CreateMap<DocumentResponseDto, DocumentResponse>();
-            Mapper.CreateMap<MultiDocumentResponseDto, MultiDocumentResponse>();
+            Mapper.CreateMap<DocumentSaveSuccessResponseDto, DocumentSaveSuccessResponse>();
+            Mapper.CreateMap<DocumentGetResponseDto, DocumentResponse>();
+            Mapper.CreateMap<MultiDocumentGetResponseDto, MultiDocumentResponse>();
             #endregion
             #region Schemas
             Mapper.CreateMap<SchemaFieldDto, SchemaField>().ReverseMap();
-            Mapper.CreateMap<SchemaDto, Schema>().ReverseMap();
-            Mapper.CreateMap<SchemaCreateResponseDto, SchemaResponse>();
-            Mapper.CreateMap<SchemaCreateSuccessResponseDto, SchemaSuccessResponse>();
+            //Important: SchemaDto -> Schema is not Automapped, and must be mapped manually. This is because Schema's Id has an internal setter.
+            Mapper.CreateMap<Schema, SchemaDto>();
+            Mapper.CreateMap<SchemaGetResponseDto, SchemaGetResponse>();
+            Mapper.CreateMap<SchemaGetListResponseDto, SchemaGetListResponse>();
+            Mapper.CreateMap<SchemaSaveResponseDto, SchemaSaveResponse>();
+            Mapper.CreateMap<SchemaSaveSuccessResponseDto, SchemaSaveSuccessResponse>();
             #endregion
         }
     }

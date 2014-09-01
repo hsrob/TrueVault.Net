@@ -1,0 +1,79 @@
+﻿<h1>truevault-net</h1>
+
+<p>.NET wrapper for the TrueVault API</p>
+
+<h3>What is TrueVault, and what is this library?</h3>
+
+<p>TrueVault is a Secure API to store health data. See their website at <a href="https://www.truevault.com">https://www.truevault.com</a> for more information.</p>
+
+<p>This library is a simple, strongly-typed .NET wrapper around TrueVault's RESTful API.</p>
+
+<h3>Features (:white_check_mark: Completed and :heavy_minus_sign: Planned)</h3>
+
+<ul>
+<li>:white_check_mark: JSON Document Store API</li>
+<li>:heavy_minus_sign: BLOB Store API</li>
+<li>:heavy_minus_sign: Search Schema API</li>
+</ul>
+
+<h3>External Dependencies</h3>
+
+<blockquote>
+  <p><strong>Client Library</strong></p>
+  
+  <ul>
+  <li>ServiceStack.Text 3.9.71</li>
+  <li>AutoMapper 3.1.1</li>
+  </ul>
+  
+  <p><strong>Test Project</strong></p>
+  
+  <ul>
+  <li>NBuilder 3.0.1.1</li>
+  <li>NUnit 2.6.3</li>
+  </ul>
+</blockquote>
+
+<h1>Usage</h1>
+
+<h2>Instantiation</h2>
+
+<p>Create a new instance of the TrueVault client, passing in your TrueVault API key, and you're ready to go!</p>
+
+<p><code>csharp<br/>
+var trueVaultClient = new TrueVaultClient("{TrueVault API Key}");<br/>
+</code></p>
+
+<h2>JSON Document Store API</h2>
+
+<h3>Creating a  Document</h3>
+
+<p>This library automatically handles Base64 conversion and serialization. You only need to pass an instance of Type <code>T</code> to save it to TrueVault. <code>T</code> can be any class with a parameterless constructor.</p>
+
+<p>A document can be created with or without the optional <code>schemaId</code> parameter. While this library (currently) does not support creating search Schemas, you can still create one yourself, then pass its ID into the appropriate overloaded <code>CreateDocument&lt;T&gt;</code> method.</p>
+
+<h3>Getting Document(s)</h3>
+
+<p><code>GetDocument&lt;T&gt;</code> is used to retrieve a single document from TrueVault, and will directly return an instance of Type <code>T</code>. Base64 conversion and deserialization is handled for you.</p>
+
+<p><code>MultiGetDocuments&lt;T&gt;</code> retrieves a <code>MultiDocumentResponse</code>, which contains a list of <code>DocumentResponse</code> in its <code>Documents</code> property. You can use the <code>DeserializeDocuments&lt;T&gt;</code> method to extract and return the wrapped document instances as Type <code>T</code>.</p>
+
+<p>Each <code>DocumentResponse</code> exposes a <code>DeserializeDocument&lt;T&gt;</code> method, which extracts and returns the individual document as Type <code>T</code>. <code>DocumentResponse</code> contains the TrueVault document ID in its <code>Id</code> property, as well as the raw serialized Base64 encoded JSON string in its <code>Document</code> property.</p>
+
+<h3>Exception Handling</h3>
+
+<p>When the library catches a <code>WebException</code>, it will make an attempt to parse and unwrap the <code>error</code> object in an error response from TrueVault. It will throw a new <code>WebException</code> with the original exception in the <code>InnerException</code> property, and a message formatted as follows, where <code>response</code> is the error response body returned by TrueVault.</p>
+
+<p><code>TrueVault Transaction ID {response.transaction_id} - {HTTP Status Code} Error (Type: {response.error.type}) [Code: {response.error.code}]: {response.error.message}</code></p>
+
+<h2>Running the Tests</h2>
+
+<p>Update App.config in the TrueVault.Net.Test project with the values you wish to use for testing. Please note that the tests use the TrueVault API, so you may incur a small amount of usage by running them. Per the license, you agree that I cannot be held responsible for any usage charges, fees, overages, etc. you may incur by running the tests.</p>
+
+<h1>Contributing</h1>
+
+<p>Pull requests are welcome. If you're planning on adding a major feature, please contact me first to make sure it fits with the direction of the library, and that I'm not already working on it!</p>
+
+<h1>Legal</h1>
+
+<p>This library is made available under The MIT License. By using this library, you agree to the terms of that license.</p>

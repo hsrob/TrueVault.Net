@@ -26,13 +26,14 @@ namespace TrueVault.Net
         }
 
         #region JSON Store
+
         /// <summary>
         ///     Creates a document in the specified Vault
         /// </summary>
         /// <param name="vaultId">ID of the Vault to create this document in</param>
         /// <param name="document">Document to store in the Vault</param>
         /// <returns>DocumentSuccessResponse</returns>
-        public DocumentSuccessResponse CreateDocument<T>(Guid vaultId, T document) where T : class, new()
+        public DocumentSaveSuccessResponse CreateDocument<T>(Guid vaultId, T document) where T : class, new()
         {
             return CreateDocument(vaultId, new DocumentRequestDto<T>(document));
         }
@@ -48,12 +49,13 @@ namespace TrueVault.Net
         ///     definition
         /// </param>
         /// <returns>DocumentSuccessResponse includes TransactionId, Status, DocumentId</returns>
-        public DocumentSuccessResponse CreateDocument<T>(Guid vaultId, T document, Guid schemaId) where T : class, new()
+        public DocumentSaveSuccessResponse CreateDocument<T>(Guid vaultId, T document, Guid schemaId)
+            where T : class, new()
         {
             return CreateDocument(vaultId, new DocumentRequestDto<T>(document, schemaId));
         }
 
-        private DocumentSuccessResponse CreateDocument<T>(Guid vaultId, DocumentRequestDto<T> documentRequestDto)
+        private DocumentSaveSuccessResponse CreateDocument<T>(Guid vaultId, DocumentRequestDto<T> documentRequestDto)
             where T : class, new()
         {
             try
@@ -61,7 +63,7 @@ namespace TrueVault.Net
                 return
                     VaultDocumentsUrl(vaultId)
                         .PostToUrl(documentRequestDto, requestFilter: AuthorizationHeader)
-                        .MapResponseDto<DocumentSuccessResponseDto, DocumentSuccessResponse>();
+                        .MapResponseDto<DocumentSaveSuccessResponseDto, DocumentSaveSuccessResponse>();
             }
             catch (WebException wex)
             {
@@ -136,7 +138,7 @@ namespace TrueVault.Net
         /// <summary>
         ///     Gets multiple existing documents
         /// </summary>
-        /// <param name="vaultId">ID of the Vault where these document are stored</param>
+        /// <param name="vaultId">ID of the Vault where these documents are stored</param>
         /// <param name="documentIds">TrueVault Document IDs of the existing documents to get</param>
         /// <returns>The requested document</returns>
         public MultiDocumentResponse MultiGetDocuments(Guid vaultId, params Guid[] documentIds)
@@ -146,13 +148,14 @@ namespace TrueVault.Net
                 return
                     VaultMultiDocumentUrl(vaultId, documentIds)
                         .GetStringFromUrl(requestFilter: AuthorizationHeader)
-                        .MapResponseDto<MultiDocumentResponseDto, MultiDocumentResponse>();
+                        .MapResponseDto<MultiDocumentGetResponseDto, MultiDocumentResponse>();
             }
             catch (WebException wex)
             {
                 throw ParseWebException(wex);
             }
         }
+
         #endregion
 
         #region Schemas
@@ -163,16 +166,39 @@ namespace TrueVault.Net
         /// <param name="vaultId">ID of the Vault to create this schema in</param>
         /// <param name="schema">Schema to create in the Vault</param>
         /// <returns>SchemaSuccessResponse</returns>
-        public SchemaSuccessResponse CreateSchema(Guid vaultId, Schema schema)
+        public SchemaSaveSuccessResponse CreateSchema(Guid vaultId, Schema schema)
         {
-            var newSchemaRequestDto = new SchemaRequestDto(Mapper.Map<SchemaDto>(schema));
+            var newSchemaRequestDto = new SchemaSaveRequestDto(Mapper.Map<SchemaDto>(schema));
 
             try
             {
                 return
                     VaultSchemasUrl(vaultId)
                         .PostToUrl(newSchemaRequestDto, requestFilter: AuthorizationHeader)
-                        .MapResponseDto<SchemaCreateSuccessResponseDto, SchemaSuccessResponse>();
+                        .MapResponseDto<SchemaSaveSuccessResponseDto, SchemaSaveSuccessResponse>();
+            }
+            catch (WebException wex)
+            {
+                throw ParseWebException(wex);
+            }
+        }
+
+        /// <summary>
+        ///     Updates an existing document
+        /// </summary>
+        /// <param name="vaultId">ID of the Vault where this Schema exists</param>
+        /// <param name="schemaId">TrueVault Schema ID of the existing Schema to update</param>
+        /// <param name="schema">Updated Schema to replace the existing Schema in the Vault</param>
+        /// <returns>TrueVaultResponse includes TransactionId, Status</returns>
+        public TrueVaultResponse UpdateSchema(Guid vaultId, Guid schemaId, Schema schema)
+        {
+            try
+            {
+                return
+                    VaultSchemaUrl(vaultId, schemaId)
+                        .PutToUrl(new SchemaSaveRequestDto(Mapper.Map<SchemaDto>(schema)),
+                            requestFilter: AuthorizationHeader)
+                        .MapResponseDto<SchemaSaveSuccessResponseDto, SchemaSaveSuccessResponse>();
             }
             catch (WebException wex)
             {
@@ -201,16 +227,70 @@ namespace TrueVault.Net
             }
         }
 
+        /// <summary>
+        ///     Gets an existing Schema
+        /// </summary>
+        /// <param name="vaultId">ID of the Vault where this Schema Exists</param>
+        /// <param name="schemaId">TrueVault Schema ID of the existing Schema to get</param>
+        /// <returns>The requested document</returns>
+        public Schema GetSchema(Guid vaultId, Guid schemaId)
+        {
+            try
+            {
+                return
+                    VaultSchemaUrl(vaultId, schemaId)
+                        .GetStringFromUrl(requestFilter: AuthorizationHeader)
+                        .MapResponseDto<SchemaGetResponseDto, SchemaGetResponse>().Schema;
+            }
+            catch (WebException wex)
+            {
+                throw ParseWebException(wex);
+            }
+        }
+
+        /// <summary>
+        ///     <para>Gets a list of existing Schemas</para>
+        ///     <para>
+        ///         Note: Schemas listed in the response will not contain Fields. Use GetSchema to get an individual Schema with
+        ///         its Fields.
+        ///     </para>
+        /// </summary>
+        /// <param name="vaultId">ID of the Vault where this Schema exists</param>
+        /// <returns>The requested document</returns>
+        public IEnumerable<Schema> GetSchemaList(Guid vaultId)
+        {
+            try
+            {
+                return
+                    VaultSchemasUrl(vaultId)
+                        .GetStringFromUrl(requestFilter: AuthorizationHeader)
+                        .MapResponseDto<SchemaGetListResponseDto, SchemaGetListResponse>().Schemas;
+            }
+            catch (WebException wex)
+            {
+                throw ParseWebException(wex);
+            }
+        }
+
         #endregion
 
         #region Helpers
+
         private WebException ParseWebException(WebException wex)
         {
             var errorResponse = JsonSerializer.DeserializeFromString<ErrorResponseDto>(wex.GetResponseBody());
             return new WebException("TrueVault Transaction ID {0} - {1} Error (Type: {2}) [Code: {3}]: {4}"
-                .Fmt(errorResponse.transaction_id, (int)wex.GetStatus().GetValueOrDefault(), errorResponse.error.type, errorResponse.error.code,
+                .Fmt(errorResponse.transaction_id, (int) wex.GetStatus().GetValueOrDefault(), errorResponse.error.type,
+                    errorResponse.error.code,
                     errorResponse.error.message), wex, wex.Status, wex.Response);
         }
+
+        private void AuthorizationHeader(HttpWebRequest request)
+        {
+            request.Headers.Add(HttpRequestHeader.Authorization, ClientConfig.Instance.AuthHeader);
+        }
+
+        #region Document URLs
 
         private string VaultMultiDocumentUrl(Guid vaultId, IEnumerable<Guid> documentIds)
         {
@@ -229,9 +309,14 @@ namespace TrueVault.Net
             return "{0}{1}/documents".Fmt(ClientConfig.Instance.TrueVaultBaseUrl, vaultId.ToString());
         }
 
+        #endregion
+
+        #region Schema URLs
+
         private string VaultSchemaUrl(Guid vaultId, Guid schemaId)
         {
-            return "{0}{1}/schemas/{2}".Fmt(ClientConfig.Instance.TrueVaultBaseUrl, vaultId.ToString(), schemaId.ToString());
+            return "{0}{1}/schemas/{2}".Fmt(ClientConfig.Instance.TrueVaultBaseUrl, vaultId.ToString(),
+                schemaId.ToString());
         }
 
         private string VaultSchemasUrl(Guid vaultId)
@@ -239,10 +324,8 @@ namespace TrueVault.Net
             return "{0}{1}/schemas".Fmt(ClientConfig.Instance.TrueVaultBaseUrl, vaultId.ToString());
         }
 
-        private void AuthorizationHeader(HttpWebRequest request)
-        {
-            request.Headers.Add(HttpRequestHeader.Authorization, ClientConfig.Instance.AuthHeader);
-        }
+        #endregion
+
         #endregion
     }
 }
