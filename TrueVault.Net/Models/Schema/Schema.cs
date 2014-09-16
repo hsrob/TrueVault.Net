@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
+using System.Linq.Expressions;
+using ServiceStack.Text;
 
 namespace TrueVault.Net.Models.Schema
 {
@@ -22,6 +25,7 @@ namespace TrueVault.Net.Models.Schema
         /// </summary>
         public Schema()
         {
+            Fields = new List<SchemaField>();
         }
 
         /// <summary>
@@ -38,7 +42,7 @@ namespace TrueVault.Net.Models.Schema
             if (fields == null || !fields.Any())
                 throw new InvalidOperationException("A Schema must include one or more fields");
             Name = name;
-            Fields = fields;
+            Fields = fields.ToList();
         }
 
         /// <summary>
@@ -59,11 +63,46 @@ namespace TrueVault.Net.Models.Schema
                 throw new InvalidOperationException("A Schema Id must be a valid (non-default) Guid");
             Id = id;
             Name = name;
-            Fields = fields;
+            Fields = fields.ToList();
         }
 
         public Guid Id { get; set; }
         public string Name { get; set; }
-        public IEnumerable<SchemaField> Fields { get; set; }
+        public List<SchemaField> Fields { get; set; }
+    }
+
+    public class Schema<T> : Schema where T : class
+    {
+        public Schema() : base(){}
+
+        public Schema(string name, params SchemaField[] fields) : base(name, fields){}
+
+        internal Schema(Guid id, string name, params SchemaField[] fields) : base(id, name, fields){}
+
+        /// <summary>
+        /// Register a field definition in a nested type (ex. "Nested.NestedField")
+        /// </summary>
+        /// <typeparam name="TNested">The type of the property containing the nested field you wish to index</typeparam>
+        /// <param name="fieldExpression">An expression providing an accessor for the field definition containing the target nested field from T</param>
+        /// <param name="nestedFieldExpression">An expression providing an accessor for the nested field from TNested</param>
+        /// <param name="fieldType">The TrueVault field type to index the nested field as. Valid types are: string, integer/long, float/double, boolean</param>
+        /// <param name="index">Whether to index the nested field</param>
+        /// <returns></returns>
+        public Schema<T> RegisterNestedField<TNested>(Expression<Func<T, object>> fieldExpression,  
+            Expression<Func<TNested, object>> nestedFieldExpression, 
+            string fieldType = "string", 
+            bool index = true) where TNested : class
+        {
+            //Try accessing via UnaryExpression Operand for value types
+            //http://stackoverflow.com/questions/12975373/expression-for-type-members-results-in-different-expressions-memberexpression
+            var sf = Utils.GetMemberExpression(fieldExpression);
+            var nf = Utils.GetMemberExpression(nestedFieldExpression);
+
+            if (sf != null && nf != null)
+            {
+                Fields.Add(new SchemaField("{0}.{1}".Fmt(sf.Member.Name, nf.Member.Name), fieldType, index));
+            }
+            return this;
+        }
     }
 }

@@ -26,6 +26,7 @@ namespace TrueVault.Net.Test
         {
             trueVaultClient = new TrueVaultClient(ConfigurationManager.AppSettings["TrueVaultApiKey"]);
             documentSuccessResponses = new ConcurrentStack<DocumentSaveSuccessResponse>();
+            schemaSuccessResponses = new ConcurrentStack<SchemaSaveSuccessResponse>();
             testVaultId = Guid.Parse(ConfigurationManager.AppSettings["TrueVaultTestVault"]);
             Mapper.AssertConfigurationIsValid();
         }
@@ -46,7 +47,7 @@ namespace TrueVault.Net.Test
 
             var retrievedPerson = trueVaultClient.GetDocument<Person>(testVaultId, createResponse.DocumentId);
 
-            Assert.AreEqual(person.ID, retrievedPerson.ID);
+            Assert.AreEqual(person.Id, retrievedPerson.Id);
             Assert.AreEqual(person.Name, retrievedPerson.Name);
             Assert.AreEqual(person.Email, retrievedPerson.Email);
         }
@@ -68,7 +69,7 @@ namespace TrueVault.Net.Test
 
             var retrievedPerson = trueVaultClient.GetDocument<Person>(testVaultId, createResponse.DocumentId);
 
-            Assert.AreEqual(person.ID, retrievedPerson.ID);
+            Assert.AreEqual(person.Id, retrievedPerson.Id);
             Assert.AreEqual(person.Name, retrievedPerson.Name);
             Assert.AreEqual(person.Email, retrievedPerson.Email);
         }
@@ -98,7 +99,7 @@ namespace TrueVault.Net.Test
             {
                 var deserializedPerson = doc.DeserializeDocument<Person>();
                 Assert.IsTrue(createResponses.ContainsKey(doc.Id));
-                Assert.AreEqual(createResponses[doc.Id].ID, deserializedPerson.ID);
+                Assert.AreEqual(createResponses[doc.Id].Id, deserializedPerson.Id);
                 Assert.AreEqual(createResponses[doc.Id].Name, deserializedPerson.Name);
                 Assert.AreEqual(createResponses[doc.Id].Email, deserializedPerson.Email);
             }
@@ -107,14 +108,24 @@ namespace TrueVault.Net.Test
         [Test]
         public void SchemaCanBeCreated()
         {
-            var personSchema = CreateSchema("Person");
+            var personSchema = CreatePersonSchema("Person" + Guid.NewGuid());
             schemaSuccessResponses.Push(AssertCreateSchemaSuccess(personSchema, testVaultId));
         }
 
         [Test]
         public void SchemaCanBeDeleted()
         {
-            var personSchema = CreateSchema("DeleteMe");
+            var schemaName = "DeleteMe" + Guid.NewGuid();
+            var deleteSchema = CreatePersonSchema(schemaName);
+            var response = trueVaultClient.CreateSchema(testVaultId, deleteSchema);
+
+            var allSchemas = trueVaultClient.GetSchemaList(testVaultId);
+            Assert.IsTrue(allSchemas.Any(s => s.Name == schemaName));
+
+            trueVaultClient.DeleteSchema(testVaultId, response.Schema.Id);
+
+            allSchemas = trueVaultClient.GetSchemaList(testVaultId);
+            Assert.IsFalse(allSchemas.Any(s => s.Name == schemaName));
         }
 
         [TestFixtureTearDown]
@@ -124,6 +135,12 @@ namespace TrueVault.Net.Test
             while (documentSuccessResponses.TryPop(out documentSuccessResponse))
             {
                 trueVaultClient.DeleteDocument(testVaultId, documentSuccessResponse.DocumentId);
+            }
+
+            SchemaSaveSuccessResponse schemaSuccessResponse;
+            while (schemaSuccessResponses.TryPop(out schemaSuccessResponse))
+            {
+                trueVaultClient.DeleteSchema(testVaultId, documentSuccessResponse.DocumentId);
             }
         }
 
@@ -149,15 +166,27 @@ namespace TrueVault.Net.Test
 
         private List<Person> CreateMultiplePersons(int listSize)
         {
-            return Builder<Person>.CreateListOfSize(listSize)
-                .All().With(p => p.Email = string.Format("{0}@truevaulttest.com", Guid.NewGuid().ToString()))
+            var people = Builder<Person>.CreateListOfSize(listSize)
+                .All()
+                .With(p => p.Email = string.Format("{0}@truevaulttest.com", Guid.NewGuid().ToString()))
                 .Build().ToList();
+
+            people.ForEach(p => 
+                p.Address = Builder<Address>
+                .CreateNew()
+                .With(a => a.PersonId = p.Id)
+                .Build());
+
+            return people;
         }
 
-        private Schema CreateSchema(string schemaName)
+        private Schema CreatePersonSchema(string schemaName)
         {
-            var personSchema = new Schema(schemaName, new SchemaField("ID", false).AsInteger(), new SchemaField("Name"),
+            var personSchema = new Schema<Person>(schemaName, new SchemaField("Id", false).AsInteger(), new SchemaField("Name"),
                 new SchemaField("Email"));
+            personSchema
+                .RegisterNestedField<Address>(p => p.Address, a => a.Id, "integer", false)
+                .RegisterNestedField<Address>(p => p.Address, a => a.Street);
             return personSchema;
         }
         private SchemaSaveSuccessResponse AssertCreateSchemaSuccess(Schema schema, Guid vaultId)
