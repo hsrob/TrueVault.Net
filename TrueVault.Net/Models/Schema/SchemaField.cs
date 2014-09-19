@@ -25,7 +25,7 @@
         ///     Create a Schema Field of the given Type
         /// </summary>
         /// <param name="name">Field Name</param>
-        /// <param name="type">The Type of this Field</param>
+        /// <param name="type">The Type of this Field. Valid types are: string, integer/long, float/double, boolean</param>
         /// <param name="index">Whether to index this field in the TrueVault search engine (optional, default: true)</param>
         public SchemaField(string name, string type, bool index = true)
         {

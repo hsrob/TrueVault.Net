@@ -1,4 +1,4 @@
-﻿<h1>truevault-net</h1>
+﻿<h1>TrueVault.Net</h1>
 
 <p>.NET wrapper for the TrueVault API</p>
 
@@ -13,26 +13,30 @@
 <ul>
 <li>:white_check_mark: JSON Document Store API</li>
 <li>:heavy_minus_sign: BLOB Store API</li>
-<li>:heavy_minus_sign: Search Schema API</li>
+<li>:white_check_mark: Search Schema management API (Get/Create/Update/Delete Schemas)<br />
+<ul><br />
+<li>:heavy_minus_sign: Search API</li><br />
+</ul></li>
 </ul>
 
 <h3>External Dependencies</h3>
 
 <blockquote>
-  <p><strong>Client Library</strong></p>
-  
   <ul>
   <li>ServiceStack.Text 3.9.71</li>
-  <li>AutoMapper 3.1.1</li>
-  </ul>
-  
-  <p><strong>Test Project</strong></p>
-  
-  <ul>
+  <li>AutoMapper 3.2.1</li>
   <li>NBuilder 3.0.1.1</li>
   <li>NUnit 2.6.3</li>
   </ul>
 </blockquote>
+
+<h2>Release Notes</h2>
+
+<h3>Version 1.0.2</h3>
+
+<ul>
+<li>Implement Search Schema management API</li>
+</ul>
 
 <h1>Usage</h1>
 
@@ -40,8 +44,8 @@
 
 <p>Create a new instance of the TrueVault client, passing in your TrueVault API key, and you're ready to go!</p>
 
-<p><code>csharp<br/>
-var trueVaultClient = new TrueVaultClient("{TrueVault API Key}");<br/>
+<p><code>csharp<br />
+var trueVaultClient = new TrueVaultClient("{TrueVault API Key}");<br />
 </code></p>
 
 <h2>JSON Document Store API</h2>
@@ -50,7 +54,7 @@ var trueVaultClient = new TrueVaultClient("{TrueVault API Key}");<br/>
 
 <p>This library automatically handles Base64 conversion and serialization. You only need to pass an instance of Type <code>T</code> to save it to TrueVault. <code>T</code> can be any class with a parameterless constructor.</p>
 
-<p>A document can be created with or without the optional <code>schemaId</code> parameter. While this library (currently) does not support creating search Schemas, you can still create one yourself, then pass its ID into the appropriate overloaded <code>CreateDocument&lt;T&gt;</code> method.</p>
+<p>A document can be created with or without the optional <code>schemaId</code> parameter via the appropriate overloaded <code>CreateDocument&lt;T&gt;</code> method.</p>
 
 <h3>Getting Document(s)</h3>
 
@@ -59,6 +63,20 @@ var trueVaultClient = new TrueVaultClient("{TrueVault API Key}");<br/>
 <p><code>MultiGetDocuments&lt;T&gt;</code> retrieves a <code>MultiDocumentResponse</code>, which contains a list of <code>DocumentResponse</code> in its <code>Documents</code> property. You can use the <code>DeserializeDocuments&lt;T&gt;</code> method to extract and return the wrapped document instances as Type <code>T</code>.</p>
 
 <p>Each <code>DocumentResponse</code> exposes a <code>DeserializeDocument&lt;T&gt;</code> method, which extracts and returns the individual document as Type <code>T</code>. <code>DocumentResponse</code> contains the TrueVault document ID in its <code>Id</code> property, as well as the raw serialized Base64 encoded JSON string in its <code>Document</code> property.</p>
+
+<h3>Creating a Schema</h3>
+
+<p>Create a new instance of <code>Schema</code> or <code>Schema&lt;T&gt;</code>. Note that even though it has a public setter, <strong>you should never modify the <code>Id</code> property of a Schema yourself</strong>.</p>
+
+<p>You can pass new instances of <code>SchemaField</code> via the <code>Schema</code>/<code>Schema&lt;T&gt;</code> constructor, or simply add them to the <code>Fields</code> List after construction. Check the Intellisense notes for further details about the various properties.</p>
+
+<p><code>Schema&lt;T&gt;</code> is derived from <code>Schema</code>, but it isn't necessary to use this generic version. It simply adds a convenience method, <code>RegisterNestedField&lt;TNested&gt;</code>, which accepts <code>fieldExpression</code>, which is a <code>MemberExpression</code> pointing to a complex property on <code>T</code>, and <code>nestedFieldExpression</code>, which is a <code>MemberExpression</code> pointing to a primitive property on <code>TNested</code>. This method will also attempt to determine the TrueVault Schema compatible type of the property on <code>TNested</code>. See the Intellisense notes and Unit Tests for further details.</p>
+
+<p>When your <code>Schema</code> is ready, call <code>TrueVaultClient.CreateSchema</code> to save it, which will return a <code>SchemaSaveSuccessResponse</code>, containing a <code>Schema</code> property that should be the same as the <code>Schema</code> you saved.</p>
+
+<h3>Getting Schema(s)</h3>
+
+<p>Call <code>TrueVaultClient.GetSchema</code> and <code>TrueVaultClient.GetSchemaList</code> to get one or all <code>Schema</code>s, respectively. The responses will contain a <code>Schema</code> or <code>IEnumerable&lt;Schema&gt;</code>, respectively.</p>
 
 <h3>Exception Handling</h3>
 

@@ -13,19 +13,20 @@ This library is a simple, strongly-typed .NET wrapper around TrueVault's RESTful
 
 - :white_check_mark: JSON Document Store API
 - :heavy_minus_sign: BLOB Store API
-- :heavy_minus_sign: Search Schema API
+- :white_check_mark: Search Schema management API (Get/Create/Update/Delete Schemas)
+  - :heavy_minus_sign: Search API
 
 ###External Dependencies
 
-> **Client Library**
-
 > - ServiceStack.Text 3.9.71
-> - AutoMapper 3.1.1
-
-> **Test Project**
-
+> - AutoMapper 3.2.1
 > - NBuilder 3.0.1.1
 > - NUnit 2.6.3
+
+##Release Notes
+
+###Version 1.0.2
+- Implement Search Schema management API
 
 #Usage
 
@@ -43,7 +44,7 @@ var trueVaultClient = new TrueVaultClient("{TrueVault API Key}");
 
 This library automatically handles Base64 conversion and serialization. You only need to pass an instance of Type `T` to save it to TrueVault. `T` can be any class with a parameterless constructor.
 
-A document can be created with or without the optional `schemaId` parameter. While this library (currently) does not support creating search Schemas, you can still create one yourself, then pass its ID into the appropriate overloaded `CreateDocument<T>` method.
+A document can be created with or without the optional `schemaId` parameter via the appropriate overloaded `CreateDocument<T>` method.
 
 ###Getting Document(s)
 
@@ -52,6 +53,20 @@ A document can be created with or without the optional `schemaId` parameter. Whi
 `MultiGetDocuments<T>` retrieves a `MultiDocumentResponse`, which contains a list of `DocumentResponse` in its `Documents` property. You can use the `DeserializeDocuments<T>` method to extract and return the wrapped document instances as Type `T`.
 
 Each `DocumentResponse` exposes a `DeserializeDocument<T>` method, which extracts and returns the individual document as Type `T`. `DocumentResponse` contains the TrueVault document ID in its `Id` property, as well as the raw serialized Base64 encoded JSON string in its `Document` property.
+
+###Creating a Schema
+
+Create a new instance of `Schema` or `Schema<T>`. Note that even though it has a public setter, **you should never modify the `Id` property of a Schema yourself**.
+
+You can pass new instances of `SchemaField` via the `Schema`/`Schema<T>` constructor, or simply add them to the `Fields` List after construction. Check the Intellisense notes for further details about the various properties.
+
+`Schema<T>` is derived from `Schema`, but it isn't necessary to use this generic version. It simply adds a convenience method, `RegisterNestedField<TNested>`, which accepts `fieldExpression`, which is a `MemberExpression` pointing to a complex property on `T`, and `nestedFieldExpression`, which is a `MemberExpression` pointing to a primitive property on `TNested`. This method will also attempt to determine the TrueVault Schema compatible type of the property on `TNested`. See the Intellisense notes and Unit Tests for further details.
+
+When your `Schema` is ready, call `TrueVaultClient.CreateSchema` to save it, which will return a `SchemaSaveSuccessResponse`, containing a `Schema` property that should be the same as the `Schema` you saved.
+
+###Getting Schema(s)
+
+Call `TrueVaultClient.GetSchema` and `TrueVaultClient.GetSchemaList` to get one or all `Schema`s, respectively. The responses will contain a `Schema` or `IEnumerable<Schema>`, respectively.
 
 ###Exception Handling
 
