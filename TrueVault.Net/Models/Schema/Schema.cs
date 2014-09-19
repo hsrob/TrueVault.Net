@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
+using AutoMapper.Impl;
 using ServiceStack.Text;
 
 namespace TrueVault.Net.Models.Schema
@@ -85,12 +87,15 @@ namespace TrueVault.Net.Models.Schema
         /// <typeparam name="TNested">The type of the property containing the nested field you wish to index</typeparam>
         /// <param name="fieldExpression">An expression providing an accessor for the field definition containing the target nested field from T</param>
         /// <param name="nestedFieldExpression">An expression providing an accessor for the nested field from TNested</param>
-        /// <param name="fieldType">The TrueVault field type to index the nested field as. Valid types are: string, integer/long, float/double, boolean</param>
+        /// <param name="fieldType">If left null, will attempt to automatically resolve primitive types (string, int/long, float/double, bool).
+        /// If left null and the field is not of a known primitive type, will default to string.
+        /// If not null, will explicitly set the TrueVault field type to index the nested field as.
+        /// Valid types are: string, integer/long, float/double, boolean</param>
         /// <param name="index">Whether to index the nested field</param>
         /// <returns></returns>
         public Schema<T> RegisterNestedField<TNested>(Expression<Func<T, object>> fieldExpression,  
             Expression<Func<TNested, object>> nestedFieldExpression, 
-            string fieldType = "string", 
+            string fieldType = null, 
             bool index = true) where TNested : class
         {
             //Try accessing via UnaryExpression Operand for value types
@@ -100,9 +105,26 @@ namespace TrueVault.Net.Models.Schema
 
             if (sf != null && nf != null)
             {
-                Fields.Add(new SchemaField("{0}.{1}".Fmt(sf.Member.Name, nf.Member.Name), fieldType, index));
+                Fields.Add(new SchemaField("{0}.{1}".Fmt(sf.Member.Name, nf.Member.Name), fieldType ?? GetAutoFieldTypeOrDefault(nf.Member), index));
             }
             return this;
+        }
+
+        string GetAutoFieldTypeOrDefault(MemberInfo fieldMemberInfo)
+        {
+            var memberType = fieldMemberInfo.GetMemberType();
+            if (memberType == typeof (int))
+                return "integer";
+            if (memberType == typeof (long))
+                return "long";
+            if (memberType == typeof (float))
+                return "float";
+            if (memberType == typeof(double))
+                return "double";
+            if (memberType == typeof(bool))
+                return "boolean";
+
+            return "string";
         }
     }
 }

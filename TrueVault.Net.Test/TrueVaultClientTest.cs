@@ -1,11 +1,11 @@
-﻿using AutoMapper;
-using FizzWare.NBuilder;
-using NUnit.Framework;
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Linq;
+using System.Linq.Expressions;
+using AutoMapper;
+using FizzWare.NBuilder;
+using NUnit.Framework;
 using TrueVault.Net.Models;
 using TrueVault.Net.Models.JsonStore;
 using TrueVault.Net.Models.Schema;
@@ -24,108 +24,11 @@ namespace TrueVault.Net.Test
         [TestFixtureSetUp]
         public void Setup()
         {
-            trueVaultClient = new TrueVaultClient(ConfigurationManager.AppSettings["TrueVaultApiKey"]);
+            trueVaultClient = new TrueVaultClient(TestConfig.Instance.TrueVaultApiKey);
             documentSuccessResponses = new ConcurrentStack<DocumentSaveSuccessResponse>();
             schemaSuccessResponses = new ConcurrentStack<SchemaSaveSuccessResponse>();
-            testVaultId = Guid.Parse(ConfigurationManager.AppSettings["TrueVaultTestVault"]);
+            testVaultId = Guid.Parse(TestConfig.Instance.TrueVaultTestVault);
             Mapper.AssertConfigurationIsValid();
-        }
-
-        [Test]
-        public void NewDocumentCanBeCreated()
-        {
-            var person = CreatePerson();
-            documentSuccessResponses.Push(AssertCreatePersonSuccess(person, testVaultId));
-        }
-
-        [Test]
-        public void ExistingDocumentCanBeRetrieved()
-        {
-            var person = CreatePerson();
-            var createResponse = AssertCreatePersonSuccess(person, testVaultId);
-            documentSuccessResponses.Push(createResponse);
-
-            var retrievedPerson = trueVaultClient.GetDocument<Person>(testVaultId, createResponse.DocumentId);
-
-            Assert.AreEqual(person.Id, retrievedPerson.Id);
-            Assert.AreEqual(person.Name, retrievedPerson.Name);
-            Assert.AreEqual(person.Email, retrievedPerson.Email);
-        }
-
-        [Test]
-        public void ExistingDocumentCanBeEdited()
-        {
-            var person = CreatePerson();
-            var createResponse = AssertCreatePersonSuccess(person, testVaultId);
-            documentSuccessResponses.Push(createResponse);
-
-            person.Name += " Justgotmarried";
-            person.Email = string.Format("{0}@truevaulttest.net", Guid.NewGuid());
-
-            var editResponse = trueVaultClient.UpdateDocument(testVaultId, createResponse.DocumentId, person);
-            Assert.AreEqual(editResponse.Result, "success", "Edit response should indicate success");
-            Assert.AreNotEqual(editResponse.TransactionId, default(Guid),
-                "Edit response Transaction ID should be a non-default GUID");
-
-            var retrievedPerson = trueVaultClient.GetDocument<Person>(testVaultId, createResponse.DocumentId);
-
-            Assert.AreEqual(person.Id, retrievedPerson.Id);
-            Assert.AreEqual(person.Name, retrievedPerson.Name);
-            Assert.AreEqual(person.Email, retrievedPerson.Email);
-        }
-
-        [Test]
-        public void MultipleDocumentsCanBeRetrieved()
-        {
-            const int personCount = 3;
-            var people = CreateMultiplePersons(personCount);
-
-            var createResponses = new Dictionary<Guid, Person>();
-
-            people.ForEach(person =>
-            {
-                var createResponse = AssertCreatePersonSuccess(person, testVaultId);
-                documentSuccessResponses.Push(createResponse);
-                createResponses.Add(createResponse.DocumentId, person);
-            });
-
-            var multipleRetrievedDocuments = trueVaultClient.MultiGetDocuments(testVaultId,
-                createResponses.Select(c => c.Key).ToArray());
-            Assert.AreEqual(personCount, multipleRetrievedDocuments.Documents.Count());
-
-            var retrievedPeopleDocs = multipleRetrievedDocuments.Documents;
-
-            foreach (var doc in retrievedPeopleDocs)
-            {
-                var deserializedPerson = doc.DeserializeDocument<Person>();
-                Assert.IsTrue(createResponses.ContainsKey(doc.Id));
-                Assert.AreEqual(createResponses[doc.Id].Id, deserializedPerson.Id);
-                Assert.AreEqual(createResponses[doc.Id].Name, deserializedPerson.Name);
-                Assert.AreEqual(createResponses[doc.Id].Email, deserializedPerson.Email);
-            }
-        }
-
-        [Test]
-        public void SchemaCanBeCreated()
-        {
-            var personSchema = CreatePersonSchema("Person" + Guid.NewGuid());
-            schemaSuccessResponses.Push(AssertCreateSchemaSuccess(personSchema, testVaultId));
-        }
-
-        [Test]
-        public void SchemaCanBeDeleted()
-        {
-            var schemaName = "DeleteMe" + Guid.NewGuid();
-            var deleteSchema = CreatePersonSchema(schemaName);
-            var response = trueVaultClient.CreateSchema(testVaultId, deleteSchema);
-
-            var allSchemas = trueVaultClient.GetSchemaList(testVaultId);
-            Assert.IsTrue(allSchemas.Any(s => s.Name == schemaName));
-
-            trueVaultClient.DeleteSchema(testVaultId, response.Schema.Id);
-
-            allSchemas = trueVaultClient.GetSchemaList(testVaultId);
-            Assert.IsFalse(allSchemas.Any(s => s.Name == schemaName));
         }
 
         [TestFixtureTearDown]
@@ -140,15 +43,13 @@ namespace TrueVault.Net.Test
             SchemaSaveSuccessResponse schemaSuccessResponse;
             while (schemaSuccessResponses.TryPop(out schemaSuccessResponse))
             {
-                trueVaultClient.DeleteSchema(testVaultId, documentSuccessResponse.DocumentId);
+                trueVaultClient.DeleteSchema(testVaultId, schemaSuccessResponse.Schema.Id);
             }
         }
 
-        #region Helpers
-
         private DocumentSaveSuccessResponse AssertCreatePersonSuccess(Person person, Guid vaultId)
         {
-            var response = trueVaultClient.CreateDocument(vaultId, person);
+            DocumentSaveSuccessResponse response = trueVaultClient.CreateDocument(vaultId, person);
             Assert.IsNotNull(response, "Response should not be null");
             Assert.AreNotEqual(response.DocumentId, default(Guid), "Document ID should be a non-default GUID");
             Assert.AreNotEqual(response.TransactionId, default(Guid), "Transaction ID should be a non-default GUID");
@@ -166,32 +67,40 @@ namespace TrueVault.Net.Test
 
         private List<Person> CreateMultiplePersons(int listSize)
         {
-            var people = Builder<Person>.CreateListOfSize(listSize)
+            List<Person> people = Builder<Person>.CreateListOfSize(listSize)
                 .All()
                 .With(p => p.Email = string.Format("{0}@truevaulttest.com", Guid.NewGuid().ToString()))
                 .Build().ToList();
 
-            people.ForEach(p => 
+            people.ForEach(p =>
                 p.Address = Builder<Address>
-                .CreateNew()
-                .With(a => a.PersonId = p.Id)
-                .Build());
+                    .CreateNew()
+                    .With(a => a.PersonId = p.Id)
+                    .Build());
 
             return people;
         }
 
         private Schema CreatePersonSchema(string schemaName)
         {
-            var personSchema = new Schema<Person>(schemaName, new SchemaField("Id", false).AsInteger(), new SchemaField("Name"),
+            var personSchema = new Schema<Person>(schemaName, new SchemaField("Id", false).AsInteger(),
+                new SchemaField("Name"),
                 new SchemaField("Email"));
             personSchema
-                .RegisterNestedField<Address>(p => p.Address, a => a.Id, "integer", false)
-                .RegisterNestedField<Address>(p => p.Address, a => a.Street);
+                .RegisterNestedField<Address>(p => p.Address, a => a.Id, null, false)
+                .RegisterNestedField<Address>(p => p.Address, a => a.PersonId)
+                .RegisterNestedField<Address>(p => p.Address, a => a.Street)
+                .RegisterNestedField<Address>(p => p.Address, a => a.City)
+                .RegisterNestedField<Address>(p => p.Address, a => a.State)
+                .RegisterNestedField<Address>(p => p.Address, a => a.PostalCode)
+                .RegisterNestedField<Address>(p => p.Address, a => a.Country)
+                .RegisterNestedField<Address>(p => p.Address, a => a.AddressType);
             return personSchema;
         }
+
         private SchemaSaveSuccessResponse AssertCreateSchemaSuccess(Schema schema, Guid vaultId)
         {
-            var response = trueVaultClient.CreateSchema(vaultId, schema);
+            SchemaSaveSuccessResponse response = trueVaultClient.CreateSchema(vaultId, schema);
             Assert.IsNotNull(response, "Response should not be null");
             Assert.AreNotEqual(response.Schema.Id, default(Guid), "Schema ID should be a non-default GUID");
             Assert.AreNotEqual(response.TransactionId, default(Guid), "Transaction ID should be a non-default GUID");
@@ -199,6 +108,102 @@ namespace TrueVault.Net.Test
             return response;
         }
 
-        #endregion
+        [Test]
+        public void ExistingDocumentCanBeEdited()
+        {
+            Person person = CreatePerson();
+            DocumentSaveSuccessResponse createResponse = AssertCreatePersonSuccess(person, testVaultId);
+            documentSuccessResponses.Push(createResponse);
+
+            person.Name += " Justgotmarried";
+            person.Email = string.Format("{0}@truevaulttest.net", Guid.NewGuid());
+
+            TrueVaultResponse editResponse = trueVaultClient.UpdateDocument(testVaultId, createResponse.DocumentId,
+                person);
+            Assert.AreEqual(editResponse.Result, "success", "Edit response should indicate success");
+            Assert.AreNotEqual(editResponse.TransactionId, default(Guid),
+                "Edit response Transaction ID should be a non-default GUID");
+
+            var retrievedPerson = trueVaultClient.GetDocument<Person>(testVaultId, createResponse.DocumentId);
+
+            Assert.AreEqual(person.Id, retrievedPerson.Id);
+            Assert.AreEqual(person.Name, retrievedPerson.Name);
+            Assert.AreEqual(person.Email, retrievedPerson.Email);
+        }
+
+        [Test]
+        public void ExistingDocumentCanBeRetrieved()
+        {
+            Person person = CreatePerson();
+            DocumentSaveSuccessResponse createResponse = AssertCreatePersonSuccess(person, testVaultId);
+            documentSuccessResponses.Push(createResponse);
+
+            var retrievedPerson = trueVaultClient.GetDocument<Person>(testVaultId, createResponse.DocumentId);
+
+            Assert.AreEqual(person.Id, retrievedPerson.Id);
+            Assert.AreEqual(person.Name, retrievedPerson.Name);
+            Assert.AreEqual(person.Email, retrievedPerson.Email);
+        }
+
+        [Test]
+        public void MultipleDocumentsCanBeRetrieved()
+        {
+            const int personCount = 3;
+            List<Person> people = CreateMultiplePersons(personCount);
+
+            var createResponses = new Dictionary<Guid, Person>();
+
+            people.ForEach(person =>
+            {
+                DocumentSaveSuccessResponse createResponse = AssertCreatePersonSuccess(person, testVaultId);
+                documentSuccessResponses.Push(createResponse);
+                createResponses.Add(createResponse.DocumentId, person);
+            });
+
+            MultiDocumentResponse multipleRetrievedDocuments = trueVaultClient.MultiGetDocuments(testVaultId,
+                createResponses.Select(c => c.Key).ToArray());
+            Assert.AreEqual(personCount, multipleRetrievedDocuments.Documents.Count());
+
+            IEnumerable<DocumentResponse> retrievedPeopleDocs = multipleRetrievedDocuments.Documents;
+
+            foreach (DocumentResponse doc in retrievedPeopleDocs)
+            {
+                var deserializedPerson = doc.DeserializeDocument<Person>();
+                Assert.IsTrue(createResponses.ContainsKey(doc.Id));
+                Assert.AreEqual(createResponses[doc.Id].Id, deserializedPerson.Id);
+                Assert.AreEqual(createResponses[doc.Id].Name, deserializedPerson.Name);
+                Assert.AreEqual(createResponses[doc.Id].Email, deserializedPerson.Email);
+            }
+        }
+
+        [Test]
+        public void NewDocumentCanBeCreated()
+        {
+            Person person = CreatePerson();
+            documentSuccessResponses.Push(AssertCreatePersonSuccess(person, testVaultId));
+        }
+
+        [Test]
+        public void SchemaCanBeCreated()
+        {
+            Schema personSchema = CreatePersonSchema("Person" + Guid.NewGuid());
+            schemaSuccessResponses.Push(AssertCreateSchemaSuccess(personSchema, testVaultId));
+        }
+
+        [Test]
+        public void SchemaCanBeDeleted()
+        {
+            string schemaName = "DeleteMe" + Guid.NewGuid();
+            Schema deleteSchema = CreatePersonSchema(schemaName);
+            SchemaSaveSuccessResponse response = trueVaultClient.CreateSchema(testVaultId, deleteSchema);
+
+            IEnumerable<Schema> allSchemas = trueVaultClient.GetSchemaList(testVaultId);
+            Assert.IsTrue(allSchemas.Any(s => s.Name == schemaName));
+
+            trueVaultClient.DeleteSchema(testVaultId, response.Schema.Id);
+
+            allSchemas = trueVaultClient.GetSchemaList(testVaultId);
+            Assert.IsFalse(allSchemas.Any(s => s.Name == schemaName));
+        }
     }
 }

@@ -5,6 +5,7 @@
         private static readonly ClientConfig instance = new ClientConfig();
         private string _trueVaultBaseUrl = "https://api.truevault.com/v1/vaults/";
 
+        static ClientConfig(){}
         private ClientConfig()
         {
         }

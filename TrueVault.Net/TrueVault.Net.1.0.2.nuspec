@@ -9,6 +9,8 @@
         <projectUrl>http://hsrob.github.io/TrueVault.Net</projectUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>A .NET wrapper for the TrueVault RESTful API</description>
+        <releaseNotes>Version 1.0.2:
+* Implement Search Schema management API</releaseNotes>
         <copyright>2014 Robert Parker</copyright>
         <tags>TrueVault</tags>
         <dependencies>
