@@ -2,9 +2,9 @@
 <html>
 
   <head>
-    <meta charset='utf-8' />
-    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
-    <meta name="description" content="TrueVault.Net : .NET wrapper for the TrueVault API" />
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="TrueVault.Net : .NET wrapper for the TrueVault API">
 
     <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
 
@@ -44,31 +44,42 @@
 <p>This library is a simple, strongly-typed .NET wrapper around TrueVault's RESTful API.</p>
 
 <h3>
-<a name="features-x-completed-and---planned" class="anchor" href="#features-x-completed-and---planned"><span class="octicon octicon-link"></span></a>Features ([x] Completed and [ ] Planned)</h3>
+<a name="features-white_check_mark-completed-and-heavy_minus_sign-planned" class="anchor" href="#features-white_check_mark-completed-and-heavy_minus_sign-planned"><span class="octicon octicon-link"></span></a>Features (<img class="emoji" title=":white_check_mark:" alt=":white_check_mark:" src="https://assets-cdn.github.com/images/icons/emoji/unicode/2705.png" height="20" width="20" align="absmiddle"> Completed and <img class="emoji" title=":heavy_minus_sign:" alt=":heavy_minus_sign:" src="https://assets-cdn.github.com/images/icons/emoji/unicode/2796.png" height="20" width="20" align="absmiddle"> Planned)</h3>
 
 <ul>
-<li>[x] JSON Document Store API</li>
-<li>[ ] BLOB Store API</li>
-<li>[ ] Search Schema API</li>
+<li>
+<img class="emoji" title=":white_check_mark:" alt=":white_check_mark:" src="https://assets-cdn.github.com/images/icons/emoji/unicode/2705.png" height="20" width="20" align="absmiddle"> JSON Document Store API</li>
+<li>
+<img class="emoji" title=":heavy_minus_sign:" alt=":heavy_minus_sign:" src="https://assets-cdn.github.com/images/icons/emoji/unicode/2796.png" height="20" width="20" align="absmiddle"> BLOB Store API</li>
+<li>
+<img class="emoji" title=":white_check_mark:" alt=":white_check_mark:" src="https://assets-cdn.github.com/images/icons/emoji/unicode/2705.png" height="20" width="20" align="absmiddle"> Search Schema management API (Get/Create/Update/Delete Schemas)
+
+<ul>
+<li>
+<img class="emoji" title=":heavy_minus_sign:" alt=":heavy_minus_sign:" src="https://assets-cdn.github.com/images/icons/emoji/unicode/2796.png" height="20" width="20" align="absmiddle"> Search API</li>
+</ul>
+</li>
 </ul><h3>
 <a name="external-dependencies" class="anchor" href="#external-dependencies"><span class="octicon octicon-link"></span></a>External Dependencies</h3>
 
 <blockquote>
-<p><strong>Client Library</strong></p>
-
 <ul>
 <li>ServiceStack.Text 3.9.71</li>
-<li>AutoMapper 3.1.1</li>
-</ul>
-<p><strong>Test Project</strong></p>
-
-<ul>
+<li>AutoMapper 3.2.1</li>
 <li>NBuilder 3.0.1.1</li>
 <li>NUnit 2.6.3</li>
 </ul>
 </blockquote>
 
-<h1>
+<h2>
+<a name="release-notes" class="anchor" href="#release-notes"><span class="octicon octicon-link"></span></a>Release Notes</h2>
+
+<h3>
+<a name="version-102" class="anchor" href="#version-102"><span class="octicon octicon-link"></span></a>Version 1.0.2</h3>
+
+<ul>
+<li>Implement Search Schema management API</li>
+</ul><h1>
 <a name="usage" class="anchor" href="#usage"><span class="octicon octicon-link"></span></a>Usage</h1>
 
 <h2>
@@ -87,7 +98,7 @@
 
 <p>This library automatically handles Base64 conversion and serialization. You only need to pass an instance of Type <code>T</code> to save it to TrueVault. <code>T</code> can be any class with a parameterless constructor.</p>
 
-<p>A document can be created with or without the optional <code>schemaId</code> parameter. While this library (currently) does not support creating search Schemas, you can still create one yourself, then pass its ID into the appropriate overloaded <code>CreateDocument&lt;T&gt;</code> method.</p>
+<p>A document can be created with or without the optional <code>schemaId</code> parameter via the appropriate overloaded <code>CreateDocument&lt;T&gt;</code> method.</p>
 
 <h3>
 <a name="getting-documents" class="anchor" href="#getting-documents"><span class="octicon octicon-link"></span></a>Getting Document(s)</h3>
@@ -97,6 +108,22 @@
 <p><code>MultiGetDocuments&lt;T&gt;</code> retrieves a <code>MultiDocumentResponse</code>, which contains a list of <code>DocumentResponse</code> in its <code>Documents</code> property. You can use the <code>DeserializeDocuments&lt;T&gt;</code> method to extract and return the wrapped document instances as Type <code>T</code>.</p>
 
 <p>Each <code>DocumentResponse</code> exposes a <code>DeserializeDocument&lt;T&gt;</code> method, which extracts and returns the individual document as Type <code>T</code>. <code>DocumentResponse</code> contains the TrueVault document ID in its <code>Id</code> property, as well as the raw serialized Base64 encoded JSON string in its <code>Document</code> property.</p>
+
+<h3>
+<a name="creating-a-schema" class="anchor" href="#creating-a-schema"><span class="octicon octicon-link"></span></a>Creating a Schema</h3>
+
+<p>Create a new instance of <code>Schema</code> or <code>Schema&lt;T&gt;</code>. Note that even though it has a public setter, <strong>you should never modify the <code>Id</code> property of a Schema yourself</strong>.</p>
+
+<p>You can pass new instances of <code>SchemaField</code> via the <code>Schema</code>/<code>Schema&lt;T&gt;</code> constructor, or simply add them to the <code>Fields</code> List after construction. Check the Intellisense notes for further details about the various properties.</p>
+
+<p><code>Schema&lt;T&gt;</code> is derived from <code>Schema</code>, but it isn't necessary to use this generic version. It simply adds a convenience method, <code>RegisterNestedField&lt;TNested&gt;</code>, which accepts <code>fieldExpression</code>, which is a <code>MemberExpression</code> pointing to a complex property on <code>T</code>, and <code>nestedFieldExpression</code>, which is a <code>MemberExpression</code> pointing to a primitive property on <code>TNested</code>. This method will also attempt to determine the TrueVault Schema compatible type of the property on <code>TNested</code>. See the Intellisense notes and Unit Tests for further details.</p>
+
+<p>When your <code>Schema</code> is ready, call <code>TrueVaultClient.CreateSchema</code> to save it, which will return a <code>SchemaSaveSuccessResponse</code>, containing a <code>Schema</code> property that should be the same as the <code>Schema</code> you saved.</p>
+
+<h3>
+<a name="getting-schemas" class="anchor" href="#getting-schemas"><span class="octicon octicon-link"></span></a>Getting Schema(s)</h3>
+
+<p>Call <code>TrueVaultClient.GetSchema</code> and <code>TrueVaultClient.GetSchemaList</code> to get one or all <code>Schema</code>s, respectively. The responses will contain a <code>Schema</code> or <code>IEnumerable&lt;Schema&gt;</code>, respectively.</p>
 
 <h3>
 <a name="exception-handling" class="anchor" href="#exception-handling"><span class="octicon octicon-link"></span></a>Exception Handling</h3>
