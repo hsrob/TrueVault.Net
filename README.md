@@ -16,6 +16,10 @@ This library is a simple, strongly-typed .NET wrapper around TrueVault's RESTful
 - :white_check_mark: Search Schema management API (Get/Create/Update/Delete Schemas)
   - :heavy_minus_sign: Search API
 
+###Installation
+
+Install via NuGet `Install-Package TrueVault.Net` or clone the repository, make sure NuGet packages are restored, and compile.
+
 ###External Dependencies
 
 > - ServiceStack.Text 3.9.71
