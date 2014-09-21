@@ -54,6 +54,7 @@
   <ItemGroup>
     <Compile Include="AutoMapperConfig.cs" />
     <Compile Include="ClientConfig.cs" />
+    <Compile Include="Dto\JsonStore\DocumentGetListResponseDto.cs" />
     <Compile Include="Dto\JsonStore\DocumentGetResponseDto.cs" />
     <Compile Include="Dto\JsonStore\DocumentSaveRequestDto.cs" />
     <Compile Include="Dto\JsonStore\DocumentSaveRequestDto`T.cs" />
@@ -70,7 +71,9 @@
     <Compile Include="Dto\ErrorResponseDto.cs" />
     <Compile Include="Dto\Inner\InnerErrorDto.cs" />
     <Compile Include="Extensions.cs" />
+    <Compile Include="Models\JsonStore\DocumentResponse.cs" />
     <Compile Include="Models\JsonStore\DocumentSaveSuccessResponse.cs" />
+    <Compile Include="Models\JsonStore\DocumentGetListResponse.cs" />
     <Compile Include="Models\JsonStore\MultiDocumentResponse.cs" />
     <Compile Include="Models\Schema\Schema.cs" />
     <Compile Include="Models\Schema\SchemaField.cs" />

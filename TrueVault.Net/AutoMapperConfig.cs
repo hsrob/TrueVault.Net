@@ -28,14 +28,17 @@ namespace TrueVault.Net
             CreateMap<DocumentSaveSuccessResponseDto, DocumentSaveSuccessResponse>();
             CreateMap<DocumentGetResponseDto, DocumentResponse>();
             CreateMap<MultiDocumentGetResponseDto, MultiDocumentResponse>();
+            CreateMap<DocumentGetListResponseDto, DocumentGetListResponse>();
+            CreateMap<DocumentGetListDataDto, DocumentGetListData>();
+            CreateMap<DocumentGetListItemDto, DocumentGetListItem>();
             #endregion
 
             CreateMap<SchemaFieldDto, SchemaField>();
-            CreateMap<SchemaDto, Schema>();
-            CreateMap<SchemaGetResponseDto, SchemaGetResponse>();
-            CreateMap<SchemaGetListResponseDto, SchemaGetListResponse>();
-            CreateMap<SchemaSaveResponseDto, SchemaSaveResponse>();
-            CreateMap<SchemaSaveSuccessResponseDto, SchemaSaveSuccessResponse>();
+            //CreateMap<SchemaDto, Schema>();
+            //CreateMap<SchemaGetResponseDto, SchemaGetResponse>();
+            //CreateMap<SchemaGetListResponseDto, SchemaGetListResponse>();
+            //CreateMap<SchemaSaveResponseDto, SchemaSaveResponse>();
+            //CreateMap<SchemaSaveSuccessResponseDto, SchemaSaveSuccessResponse>();
         }
     }
 

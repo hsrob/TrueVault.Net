@@ -29,12 +29,25 @@
   <ul>
   <li>ServiceStack.Text 3.9.71</li>
   <li>AutoMapper 3.2.1</li>
+  </ul>
+</blockquote>
+
+<h4>Test Project Only</h4>
+
+<blockquote>
+  <ul>
   <li>NBuilder 3.0.1.1</li>
   <li>NUnit 2.6.3</li>
   </ul>
 </blockquote>
 
 <h2>Release Notes</h2>
+
+<h3>Version 1.0.3</h3>
+
+<ul>
+<li>Implement the new Get Document List API method, which returns a paginated list of all documents in a vault</li>
+</ul>
 
 <h3>Version 1.0.2</h3>
 
@@ -62,15 +75,25 @@ var trueVaultClient = new TrueVaultClient("{TrueVault API Key}");<br />
 
 <h3>Getting Document(s)</h3>
 
+<h4>Individual Document by ID</h4>
+
 <p><code>GetDocument&lt;T&gt;</code> is used to retrieve a single document from TrueVault, and will directly return an instance of Type <code>T</code>. Base64 conversion and deserialization is handled for you.</p>
+
+<h4>Multiple Specific Documents by ID</h4>
 
 <p><code>MultiGetDocuments&lt;T&gt;</code> retrieves a <code>MultiDocumentResponse</code>, which contains a list of <code>DocumentResponse</code> in its <code>Documents</code> property. You can use the <code>DeserializeDocuments&lt;T&gt;</code> method to extract and return the wrapped document instances as Type <code>T</code>.</p>
 
 <p>Each <code>DocumentResponse</code> exposes a <code>DeserializeDocument&lt;T&gt;</code> method, which extracts and returns the individual document as Type <code>T</code>. <code>DocumentResponse</code> contains the TrueVault document ID in its <code>Id</code> property, as well as the raw serialized Base64 encoded JSON string in its <code>Document</code> property.</p>
 
+<h4>Paginated List of All Documents</h4>
+
+<p><code>GetDocumentList</code> retrieves a <code>DocumentGetListResponse</code>, which contains a <code>Data</code> property, which in turn contains info about the request, and <code>List&lt;DocumentGetListItem&gt;</code> in its <code>Items</code> property. You can use the <code>DeserializeDocuments&lt;T&gt;</code> method to extract and return the wrapped document instances as Type <code>T</code>.</p>
+
+<p>Each <code>DocumentGetListItem</code> exposes a <code>DeserializeDocument&lt;T&gt;</code> method, which extracts and returns the individual document as Type <code>T</code>. <code>DocumentGetListItem</code> contains the TrueVault document ID in its <code>Id</code> property, the TrueVault Schema ID the document was indexed under (if any) in its <code>SchemaId</code> property, the TrueVault Vault ID in its <code>VaultId</code> property, and the raw serialized Base64 encoded JSON string in its <code>Document</code> property.</p>
+
 <h3>Creating a Schema</h3>
 
-<p>Create a new instance of <code>Schema</code> or <code>Schema&lt;T&gt;</code>. Note that even though it has a public setter, <strong>you should never modify the <code>Id</code> property of a Schema yourself</strong>.</p>
+<p>Create a new instance of <code>Schema</code> or <code>Schema&lt;T&gt;</code>.</p>
 
 <p>You can pass new instances of <code>SchemaField</code> via the <code>Schema</code>/<code>Schema&lt;T&gt;</code> constructor, or simply add them to the <code>Fields</code> List after construction. Check the Intellisense notes for further details about the various properties.</p>
 

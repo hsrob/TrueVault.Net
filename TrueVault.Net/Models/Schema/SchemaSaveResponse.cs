@@ -7,6 +7,17 @@ namespace TrueVault.Net.Models.Schema
     /// </summary>
     public class SchemaSaveResponse : Schema
     {
-        public Guid VaultId { get; set; }
+        internal SchemaSaveResponse(Guid vaultId, string name, params SchemaField[] fields) : base(name, fields)
+        {
+            VaultId = vaultId;
+        }
+
+        internal SchemaSaveResponse(Guid vaultId, Guid id, string name, params SchemaField[] fields)
+            : base(id, name, fields)
+        {
+            VaultId = vaultId;
+        }
+
+        public Guid VaultId { get; private set; }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Text;
@@ -63,7 +64,7 @@ namespace TrueVault.Net
                 return
                     VaultDocumentsUrl(vaultId)
                         .PostToUrl(documentRequestDto, requestFilter: AuthorizationHeader)
-                        .MapResponseDto<DocumentSaveSuccessResponseDto, DocumentSaveSuccessResponse>();
+                        .AutoMapResponseDto<DocumentSaveSuccessResponseDto, DocumentSaveSuccessResponse>();
             }
             catch (WebException wex)
             {
@@ -85,7 +86,7 @@ namespace TrueVault.Net
                 return
                     VaultDocumentUrl(vaultId, documentId)
                         .PutToUrl(new DocumentRequestDto<T>(document), requestFilter: AuthorizationHeader)
-                        .MapResponseDto<TrueVaultResponseDto, TrueVaultResponse>();
+                        .AutoMapResponseDto<TrueVaultResponseDto, TrueVaultResponse>();
             }
             catch (WebException wex)
             {
@@ -106,7 +107,7 @@ namespace TrueVault.Net
                 return
                     VaultDocumentUrl(vaultId, documentId)
                         .DeleteFromUrl(requestFilter: AuthorizationHeader)
-                        .MapResponseDto<TrueVaultResponseDto, TrueVaultResponse>();
+                        .AutoMapResponseDto<TrueVaultResponseDto, TrueVaultResponse>();
             }
             catch (WebException wex)
             {
@@ -127,7 +128,30 @@ namespace TrueVault.Net
                 return
                     VaultDocumentUrl(vaultId, documentId)
                         .GetStringFromUrl(requestFilter: AuthorizationHeader)
-                        .MapDocumentResponse<T>();
+                        .MapBase64StringResponse<T>();
+            }
+            catch (WebException wex)
+            {
+                throw ParseWebException(wex);
+            }
+        }
+
+        /// <summary>
+        ///     Returns a paginated list of all documents in the vault, sorted by created timestamp in descending order
+        /// </summary>
+        /// <param name="vaultId">ID of the Vault where the documents are stored</param>
+        /// <param name="fullDocument">Specify true to retrieve entire document contents; false to retrieve just document ids</param>
+        /// <param name="page">Specify page number for the paged results</param>
+        /// <param name="perPage">Specify the number of results per page</param>
+        /// <returns>A paginated list of all documents in the vault, sorted by created timestamp in descending order</returns>
+        public DocumentGetListResponse GetDocumentList(Guid vaultId, bool fullDocument = false, int page = 1, int perPage = 100)
+        {
+            try
+            {
+                return
+                    VaultDocumentsListUrl(vaultId, fullDocument, page, perPage)
+                        .GetStringFromUrl(requestFilter: AuthorizationHeader)
+                        .AutoMapResponseDto<DocumentGetListResponseDto, DocumentGetListResponse>();
             }
             catch (WebException wex)
             {
@@ -148,7 +172,7 @@ namespace TrueVault.Net
                 return
                     VaultMultiDocumentUrl(vaultId, documentIds)
                         .GetStringFromUrl(requestFilter: AuthorizationHeader)
-                        .MapResponseDto<MultiDocumentGetResponseDto, MultiDocumentResponse>();
+                        .AutoMapResponseDto<MultiDocumentGetResponseDto, MultiDocumentResponse>();
             }
             catch (WebException wex)
             {
@@ -175,7 +199,7 @@ namespace TrueVault.Net
                 return
                     VaultSchemasUrl(vaultId)
                         .PostToUrl(newSchemaRequestDto, requestFilter: AuthorizationHeader)
-                        .MapResponseDto<SchemaSaveSuccessResponseDto, SchemaSaveSuccessResponse>();
+                        .MapToSchemaSaveSuccessResponse();
             }
             catch (WebException wex)
             {
@@ -198,7 +222,7 @@ namespace TrueVault.Net
                     VaultSchemaUrl(vaultId, schemaId)
                         .PutToUrl(new SchemaSaveRequestDto(Mapper.Map<SchemaDto>(schema)),
                             requestFilter: AuthorizationHeader)
-                        .MapResponseDto<SchemaSaveSuccessResponseDto, SchemaSaveSuccessResponse>();
+                        .MapToSchemaSaveSuccessResponse();
             }
             catch (WebException wex)
             {
@@ -219,7 +243,7 @@ namespace TrueVault.Net
                 return
                     VaultSchemaUrl(vaultId, schemaId)
                         .DeleteFromUrl(requestFilter: AuthorizationHeader)
-                        .MapResponseDto<TrueVaultResponseDto, TrueVaultResponse>();
+                        .AutoMapResponseDto<TrueVaultResponseDto, TrueVaultResponse>();
             }
             catch (WebException wex)
             {
@@ -233,14 +257,14 @@ namespace TrueVault.Net
         /// <param name="vaultId">ID of the Vault where this Schema Exists</param>
         /// <param name="schemaId">TrueVault Schema ID of the existing Schema to get</param>
         /// <returns>The requested document</returns>
-        public Schema GetSchema(Guid vaultId, Guid schemaId)
+        public SchemaGetResponse GetSchema(Guid vaultId, Guid schemaId)
         {
             try
             {
                 return
                     VaultSchemaUrl(vaultId, schemaId)
                         .GetStringFromUrl(requestFilter: AuthorizationHeader)
-                        .MapResponseDto<SchemaGetResponseDto, SchemaGetResponse>().Schema;
+                        .MapToSchemaGetResponse();
             }
             catch (WebException wex)
             {
@@ -257,14 +281,14 @@ namespace TrueVault.Net
         /// </summary>
         /// <param name="vaultId">ID of the Vault where this Schema exists</param>
         /// <returns>The requested document</returns>
-        public IEnumerable<Schema> GetSchemaList(Guid vaultId)
+        public SchemaGetListResponse GetSchemaList(Guid vaultId)
         {
             try
             {
                 return
                     VaultSchemasUrl(vaultId)
                         .GetStringFromUrl(requestFilter: AuthorizationHeader)
-                        .MapResponseDto<SchemaGetListResponseDto, SchemaGetListResponse>().Schemas;
+                        .MapToSchemaGetListResponse();
             }
             catch (WebException wex)
             {
@@ -291,7 +315,6 @@ namespace TrueVault.Net
         }
 
         #region Document URLs
-
         private string VaultMultiDocumentUrl(Guid vaultId, IEnumerable<Guid> documentIds)
         {
             return "{0}{1}/documents/{2}".Fmt(ClientConfig.Instance.TrueVaultBaseUrl, vaultId.ToString(),
@@ -307,6 +330,11 @@ namespace TrueVault.Net
         private string VaultDocumentsUrl(Guid vaultId)
         {
             return "{0}{1}/documents".Fmt(ClientConfig.Instance.TrueVaultBaseUrl, vaultId.ToString());
+        }
+
+        private string VaultDocumentsListUrl(Guid vaultId, bool fullDocument = false, int page = 1, int perPage = 100)
+        {
+            return "{0}{1}/documents?full_document={2}&page={3}&per_page={4}".Fmt(ClientConfig.Instance.TrueVaultBaseUrl, vaultId.ToString(), fullDocument.ToString().ToLowerInvariant(), page.ToString(CultureInfo.InvariantCulture), perPage.ToString(CultureInfo.InvariantCulture));
         }
 
         #endregion

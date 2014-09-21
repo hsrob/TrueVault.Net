@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace TrueVault.Net.Models.Schema
 {
@@ -7,6 +8,12 @@ namespace TrueVault.Net.Models.Schema
     /// </summary>
     public class SchemaGetListResponse : TrueVaultResponse
     {
-        public IEnumerable<Schema> Schemas { get; set; }
+        internal SchemaGetListResponse(string result, Guid transactionId, IEnumerable<Schema> schemas)
+        {
+            Result = result;
+            TransactionId = transactionId;
+            Schemas = schemas;
+        }
+        public IEnumerable<Schema> Schemas { get; private set; }
     }
 }

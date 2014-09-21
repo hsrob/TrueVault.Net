@@ -24,10 +24,15 @@ Install via NuGet `Install-Package TrueVault.Net` or clone the repository, make 
 
 > - ServiceStack.Text 3.9.71
 > - AutoMapper 3.2.1
+
+####Test Project Only
 > - NBuilder 3.0.1.1
 > - NUnit 2.6.3
 
 ##Release Notes
+
+###Version 1.0.3
+- Implement the new Get Document List API method, which returns a paginated list of all documents in a vault
 
 ###Version 1.0.2
 - Implement Search Schema management API
@@ -52,15 +57,22 @@ A document can be created with or without the optional `schemaId` parameter via 
 
 ###Getting Document(s)
 
+####Individual Document by ID
 `GetDocument<T>` is used to retrieve a single document from TrueVault, and will directly return an instance of Type `T`. Base64 conversion and deserialization is handled for you.
 
+####Multiple Specific Documents by ID
 `MultiGetDocuments<T>` retrieves a `MultiDocumentResponse`, which contains a list of `DocumentResponse` in its `Documents` property. You can use the `DeserializeDocuments<T>` method to extract and return the wrapped document instances as Type `T`.
 
 Each `DocumentResponse` exposes a `DeserializeDocument<T>` method, which extracts and returns the individual document as Type `T`. `DocumentResponse` contains the TrueVault document ID in its `Id` property, as well as the raw serialized Base64 encoded JSON string in its `Document` property.
 
+####Paginated List of All Documents
+`GetDocumentList` retrieves a `DocumentGetListResponse`, which contains a `Data` property, which in turn contains info about the request, and `List<DocumentGetListItem>` in its `Items` property. You can use the `DeserializeDocuments<T>` method to extract and return the wrapped document instances as Type `T`.
+
+Each `DocumentGetListItem` exposes a `DeserializeDocument<T>` method, which extracts and returns the individual document as Type `T`. `DocumentGetListItem` contains the TrueVault document ID in its `Id` property, the TrueVault Schema ID the document was indexed under (if any) in its `SchemaId` property, the TrueVault Vault ID in its `VaultId` property, and the raw serialized Base64 encoded JSON string in its `Document` property.
+
 ###Creating a Schema
 
-Create a new instance of `Schema` or `Schema<T>`. Note that even though it has a public setter, **you should never modify the `Id` property of a Schema yourself**.
+Create a new instance of `Schema` or `Schema<T>`.
 
 You can pass new instances of `SchemaField` via the `Schema`/`Schema<T>` constructor, or simply add them to the `Fields` List after construction. Check the Intellisense notes for further details about the various properties.
 

@@ -68,7 +68,7 @@ namespace TrueVault.Net.Models.Schema
             Fields = fields.ToList();
         }
 
-        public Guid Id { get; set; }
+        public Guid Id { get; internal set; }
         public string Name { get; set; }
         public List<SchemaField> Fields { get; set; }
     }

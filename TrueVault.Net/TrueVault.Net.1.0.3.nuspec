@@ -2,14 +2,17 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
     <metadata>
         <id>TrueVault.Net</id>
-        <version>1.0.2</version>
+        <version>1.0.3</version>
         <title>TrueVault.Net</title>
         <authors>Robert Parker</authors>
         <owners>Robert Parker</owners>
         <projectUrl>http://hsrob.github.io/TrueVault.Net</projectUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>A .NET wrapper for the TrueVault RESTful API</description>
-        <releaseNotes>Version 1.0.2:
+        <releaseNotes>Version 1.0.3:
+*Implement the new Get Document List API method, which returns a paginated list of all documents in a vault
+
+Version 1.0.2:
 * Implement Search Schema management API</releaseNotes>
         <copyright>2014 Robert Parker</copyright>
         <tags>TrueVault</tags>

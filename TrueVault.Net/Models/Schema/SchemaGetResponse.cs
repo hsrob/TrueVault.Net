@@ -1,10 +1,18 @@
-﻿namespace TrueVault.Net.Models.Schema
+﻿using System;
+
+namespace TrueVault.Net.Models.Schema
 {
     /// <summary>
     ///     Response wrapper containing a Schema, returned from GET /{VaultId}/schemas/{SchemaId}
     /// </summary>
     public class SchemaGetResponse : TrueVaultResponse
     {
-        public Schema Schema { get; set; }
+        internal SchemaGetResponse(string result, Guid transactionId, Schema schema)
+        {
+            Result = result;
+            TransactionId = transactionId;
+            Schema = schema;
+        }
+        public Schema Schema { get; private set; }
     }
 }

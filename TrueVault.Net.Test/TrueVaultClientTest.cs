@@ -184,6 +184,35 @@ namespace TrueVault.Net.Test
         }
 
         [Test]
+        public void DocumentsCanBeListed()
+        {
+            Person person = CreatePerson();
+            var personSuccessResp = AssertCreatePersonSuccess(person, testVaultId);
+            documentSuccessResponses.Push(personSuccessResp);
+
+            var response = trueVaultClient.GetDocumentList(testVaultId, true);
+            Assert.IsNotNull(response, "Response should not be null");
+            Assert.IsNotNull(response.Data, "Response Data should not be null");
+            Assert.IsTrue(response.Data.FullDocument);
+            Assert.AreNotEqual(response.TransactionId, default(Guid), "Transaction ID should be a non-default GUID");
+            Assert.AreEqual(1, response.Data.Page);
+            Assert.AreEqual(100, response.Data.PerPage);
+            Assert.AreEqual("success", response.Result, "Response should indicate success");
+
+            Assert.IsTrue(response.Data.Items.All(itm => itm.Id != default(Guid)));
+
+            var peopleInList = response.Data.DeserializeDocuments<Person>();
+            CollectionAssert.AllItemsAreInstancesOfType(peopleInList, typeof(Person));
+            CollectionAssert.AllItemsAreUnique(peopleInList);
+
+            var firstPerson = peopleInList.FirstOrDefault();
+            Assert.IsNotNull(firstPerson);
+
+            Assert.AreEqual(person.Name, firstPerson.Name);
+            Assert.AreEqual(person.Email, firstPerson.Email);
+        }
+
+        [Test]
         public void SchemaCanBeCreated()
         {
             Schema personSchema = CreatePersonSchema("Person" + Guid.NewGuid());
@@ -197,12 +226,12 @@ namespace TrueVault.Net.Test
             Schema deleteSchema = CreatePersonSchema(schemaName);
             SchemaSaveSuccessResponse response = trueVaultClient.CreateSchema(testVaultId, deleteSchema);
 
-            IEnumerable<Schema> allSchemas = trueVaultClient.GetSchemaList(testVaultId);
+            IEnumerable<Schema> allSchemas = trueVaultClient.GetSchemaList(testVaultId).Schemas;
             Assert.IsTrue(allSchemas.Any(s => s.Name == schemaName));
 
             trueVaultClient.DeleteSchema(testVaultId, response.Schema.Id);
 
-            allSchemas = trueVaultClient.GetSchemaList(testVaultId);
+            allSchemas = trueVaultClient.GetSchemaList(testVaultId).Schemas;
             Assert.IsFalse(allSchemas.Any(s => s.Name == schemaName));
         }
     }
