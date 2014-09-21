@@ -70,6 +70,9 @@ Each `DocumentResponse` exposes a `DeserializeDocument<T>` method, which extract
 
 Each `DocumentGetListItem` exposes a `DeserializeDocument<T>` method, which extracts and returns the individual document as Type `T`. `DocumentGetListItem` contains the TrueVault document ID in its `Id` property, the TrueVault Schema ID the document was indexed under (if any) in its `SchemaId` property, the TrueVault Vault ID in its `VaultId` property, and the raw serialized Base64 encoded JSON string in its `Document` property.
 
+
+##Schema API
+
 ###Creating a Schema
 
 Create a new instance of `Schema` or `Schema<T>`.
